@@ -2,18 +2,14 @@
   <v-app>
     <v-container>
       <v-row>
-        <v-col cols="12" md="8" offset-md="2">
-          <canvas ref="canvas"></canvas>
-        </v-col>
-
         <v-col
-          v-for="(teammate, i) in removableTeammates"
+          v-for="(chartName, i) in charts"
           :key="i"
           cols="12"
           md="8"
           offset-md="2"
         >
-          <canvas :ref="teammate"></canvas>
+          <canvas :ref="chartName"></canvas>
         </v-col>
       </v-row>
     </v-container>
@@ -24,10 +20,7 @@
 /* eslint-disable no-new */
 
 import Chart from 'chart.js'
-import _ from 'lodash'
-
-const countVotes = x =>
-  Object.fromEntries(Object.entries(x).map(([x, votes]) => [x, votes.length]))
+import * as R from 'ramda'
 
 const defaultOptions = {
   scales: {
@@ -46,69 +39,64 @@ export default {
     return {
       questions: {},
       results: {},
-      removableTeammates: [],
     }
+  },
+  computed: {
+    charts() {
+      // prettier-ignore
+      return R.pipe(
+        R.flatten,
+        R.map(R.prop('ask')
+      ))(this.questions)
+    },
   },
   async mounted() {
     const { data } = await this.$axios.get()
-    this.questions = data.questions
-    this.results = Object.entries(data.results).map(
-      ([name, possibilities]) => ({
-        name,
-        ...possibilities,
-      })
-    )
 
-    this.managerChart()
+    this.questions = R.flatten(data.questions)
+    // prettier-ignore
+    this.results = R.pipe(
+      R.toPairs,
+      R.map(
+        R.pipe(
+          R.evolve([R.objOf('name')]),
+          R.mergeAll
+        )
+      )
+    )(data.results)
 
-    const limitations = this.questions.limitations
-    this.removableTeammates = Object.entries(limitations).map(([el]) => el)
     await this.$nextTick()
 
-    this.removableTeammates.forEach(teammate => {
-      this.removeTeamMemberChart(this.$refs[teammate][0], teammate)
-    })
+    this.charts.forEach(this.drawChart)
   },
   methods: {
-    managerChart() {
-      let managerVotes = _.groupBy(this.results, ({ manager }) => manager)
-      managerVotes = countVotes(managerVotes)
-      managerVotes = this.questions.manager.map(el => managerVotes[el] || 0)
+    drawChart(name) {
+      const { responses } = R.find(
+        R.pipe(R.prop('ask'), R.equals(name)),
+        this.questions
+      )
 
-      new Chart(this.$refs.canvas, {
-        type: 'bar',
-        data: {
-          labels: this.questions.manager,
-          datasets: [
-            {
-              data: managerVotes,
-            },
-          ],
-        },
-      })
-    },
-    removeTeamMemberChart(ctx, teammate) {
-      const possibilities = this.questions.limitations[teammate]
+      const votes = R.pipe(
+        R.groupBy(el => el[name]),
+        R.map(R.length)
+      )(this.results)
 
-      let votes = _.groupBy(this.results, el => el.limitations[teammate])
-      votes = countVotes(votes)
-      votes = possibilities.map(possibility => votes[possibility] || 0)
+      const data = responses.map(possibility => votes[possibility] || 0)
 
-      new Chart(ctx, {
-        label: 'asd',
+      new Chart(this.$refs[name][0], {
         type: 'bar',
         options: {
           title: {
             display: true,
-            text: teammate,
+            text: name,
           },
           ...defaultOptions,
         },
         data: {
-          labels: possibilities,
+          labels: responses,
           datasets: [
             {
-              data: votes,
+              data,
             },
           ],
         },
