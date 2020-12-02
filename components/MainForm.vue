@@ -104,7 +104,9 @@ export default {
       }
     },
     send() {
-      console.log(this.answers)
+      this.$axios.post(this.code, this.answers).then(() => {
+        this.$router.push('/results')
+      })
     },
   },
 }
