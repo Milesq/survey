@@ -1,6 +1,7 @@
 const fs = require('fs')
 const express = require('express')
 const _ = require('lodash')
+const R = require('ramda')
 const cors = require('cors')
 const { default: ow } = require('ow')
 const bodyParser = require('body-parser')
@@ -16,62 +17,43 @@ const tokens = json('users').map(name => ({
 
 fs.writeFileSync('tokens.json', JSON.stringify(tokens, null, 2))
 
-const toLimitate = ['Milosz', 'Marcin', 'Takbylo']
-const possibleLimitations = [
-  'Niech zostanie tak jak jest',
-  'Ograniczenie dostepu',
-  'Wydalenie',
-]
-const managers = [
-  'Marcin',
-  'Milosz',
-  'TakByło',
-  'Rada Nadzorcza (Milosz, Marcin, Wojtek, Aleksander)',
-]
-
-let bodyTemplate = {
-  manager: ow.string.is(answer => managers.includes(answer)),
-  limitations: {},
-}
-
-toLimitate.forEach(toLimitate => {
-  bodyTemplate.limitations[toLimitate] = ow.string.is(
-    _.unary(_.bind(Array.prototype.includes, possibleLimitations))
-  )
-})
-
-bodyTemplate = ow.object.exactShape(bodyTemplate)
+const bodyTemplate = R.pipe(
+  R.flatten,
+  // prettier-ignore
+  R.map(
+    R.juxt([
+      R.prop('ask'),
+      R.pipe(
+        R.prop('responses'),
+        arr => ow.string.is(R.includes(R.__, arr)),
+      )
+    ])
+  ),
+  R.fromPairs,
+  ow.object.exactShape
+)(json('questions'))
 
 const app = express()
 
 app.use(bodyParser.json())
 app.use(cors())
-
+// prettier-ignore
 app.post('/:token', hasCorrectToken(tokens), (req, res) => {
   const reqIsValid = ow.isValid(req.body, bodyTemplate)
   if (!reqIsValid) {
     return res.sendStatus(400)
   }
 
-  const answers = require('./answers.json')
+  // const answers = json('answers')
 
-  answers[req.user] = req.body
+  // answers[req.user] = req.body
 
-  fs.writeFileSync('./answers.json', JSON.stringify(answers, null, 2))
+  // fs.writeFileSync('./answers.json', JSON.stringify(answers, null, 2))
 
   res.send('ok')
 })
 
 app.get('/', (req, res) => {
-  const answers = {
-    manager: managers,
-    limitations: {},
-  }
-
-  toLimitate.forEach(toLimitate => {
-    answers.limitations[toLimitate] = possibleLimitations
-  })
-
   res.send({
     questions: json('questions'),
     results: json('answers'),
@@ -80,7 +62,7 @@ app.get('/', (req, res) => {
 
 app.get('/:tokenToCheck', (req, res) => {
   const { tokenToCheck } = req.params
-  const exists = tokens.map(({ token }) => token).includes(tokenToCheck)
+  const exists = R.any(R.propEq('token', tokenToCheck))(tokens)
 
   res.send({ exists })
 })
