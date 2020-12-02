@@ -42,11 +42,11 @@ app.post('/:token', hasCorrectToken(tokens), (req, res) => {
     return res.sendStatus(400)
   }
 
-  // const answers = json('answers')
+  const answers = json('answers')
 
-  // answers[req.user] = req.body
+  answers[req.user] = req.body
 
-  // fs.writeFileSync('./answers.json', JSON.stringify(answers, null, 2))
+  fs.writeFileSync('./answers.json', JSON.stringify(answers, null, 2))
 
   res.send('ok')
 })
