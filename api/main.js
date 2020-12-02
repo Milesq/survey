@@ -28,8 +28,7 @@ const bodyTemplate = R.pipe(
       )
     ])
   ),
-  R.fromPairs,
-  ow.object.exactShape
+  R.fromPairs
 )(json('questions'))
 
 const app = express()
@@ -38,7 +37,7 @@ app.use(bodyParser.json())
 app.use(cors())
 // prettier-ignore
 app.post('/:token', hasCorrectToken(tokens), (req, res) => {
-  const reqIsValid = ow.isValid(req.body, bodyTemplate)
+  const reqIsValid = ow.isValid(req.body, ow.object.exactShape(bodyTemplate))
   if (!reqIsValid) {
     return res.sendStatus(400)
   }
