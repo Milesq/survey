@@ -3,22 +3,23 @@
     <v-stepper-header class="mb-2">
       <v-spacer />
 
-      <v-stepper-step :complete="currentEl > 1" step="1">
-        Wybór kierownika
-      </v-stepper-step>
+      <v-stepper-step :complete="currentEl > 1" step="1" />
 
-      <v-spacer />
-
-      <v-stepper-step :complete="currentEl > 2" step="2">
-        Skład
-      </v-stepper-step>
+      <template v-for="i in questions.length">
+        <v-spacer :key="i + '-spacer'" />
+        <v-stepper-step
+          :key="`${i + 1}`"
+          :complete="currentEl > i + 1"
+          :step="i + 1"
+        />
+      </template>
 
       <v-spacer />
     </v-stepper-header>
 
     <v-stepper-items>
       <v-stepper-content step="1">
-        <v-form ref="form1">
+        <v-form ref="form-1" @submit.prevent="start">
           <v-text-field
             v-model="code"
             class="mt-4"
@@ -27,33 +28,32 @@
             :error-messages="codeExists ? [] : 'Podany kod nie istnieje'"
           ></v-text-field>
 
-          <v-select
-            v-model="selectedManager"
-            label="Kierownik"
-            :items="managers"
-            :rules="[v => !!v || 'Item is required']"
-          ></v-select>
-
           <div class="d-flex justify-end">
-            <v-btn color="primary" @click="next">Next</v-btn>
+            <v-btn color="primary" type="submit">Start</v-btn>
           </div>
         </v-form>
       </v-stepper-content>
 
-      <v-stepper-content step="2">
-        <v-form ref="form2">
+      <v-stepper-content
+        v-for="(questionPart, i) in questions"
+        :key="i"
+        :step="i + 2"
+      >
+        <v-form :ref="`form-${i + 2}`" @submit.prevent="next">
           <v-select
-            v-for="(untrusted, i) in untrastedUsers"
-            :key="i"
-            v-model="selectedLimitations[untrusted.name]"
-            :label="untrusted.name"
-            :items="untrusted.possibilities"
+            v-for="(question, j) in questionPart"
+            :key="j"
+            v-model="answers[question.ask]"
+            :label="question.ask"
+            :items="question.responses"
             :rules="[v => !!v || 'Item is required']"
           />
 
           <div class="d-flex justify-space-between">
-            <v-btn text @click="currentEl = 1">Powrót</v-btn>
-            <v-btn color="success" @click="send">Wyślij</v-btn>
+            <v-btn text @click="currentEl--">Powrót</v-btn>
+            <v-btn color="success" type="submit">
+              {{ isTheLast ? 'Wyślij' : 'Dalej' }}
+            </v-btn>
           </div>
         </v-form>
       </v-stepper-content>
@@ -68,33 +68,24 @@ export default {
       currentEl: 1,
       code: '',
       codeExists: true,
-      managers: [],
-      limitations: {},
-
-      selectedLimitations: {},
-      selectedManager: '',
+      questions: [],
+      answers: {},
     }
   },
   computed: {
-    untrastedUsers() {
-      return Object.entries(this.limitations).map(([name, possibilities]) => ({
-        name,
-        possibilities,
-      }))
+    isTheLast() {
+      return this.currentEl - 1 === this.questions.length
     },
   },
   async mounted() {
     const {
-      data: {
-        questions: { limitations, manager },
-      },
+      data: { questions },
     } = await this.$axios.get('/')
 
-    this.managers = manager
-    this.limitations = limitations
+    this.questions = questions
   },
   methods: {
-    async next() {
+    async start() {
       const {
         data: { exists },
       } = await this.$axios.get(this.code)
@@ -102,22 +93,18 @@ export default {
       this.codeExists = exists
       if (!exists) return
 
-      if (!this.$refs.form1.validate()) return
+      if (!this.$refs['form-1'].validate()) return
 
       this.currentEl = 2
     },
-    send() {
-      if (!this.$refs.form2.validate()) return
-      const body = {
-        manager: this.selectedManager,
-        limitations: {
-          ...this.selectedLimitations,
-        },
+    next() {
+      if (this.$refs[`form-${this.currentEl}`][0].validate()) {
+        if (this.isTheLast) this.send()
+        else this.currentEl++
       }
-
-      this.$axios.post(this.code, body).then(() => {
-        this.$router.push('/results')
-      })
+    },
+    send() {
+      console.log(this.answers)
     },
   },
 }
