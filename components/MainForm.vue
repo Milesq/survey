@@ -86,7 +86,7 @@ export default {
   async mounted() {
     const {
       data: {
-        answers: { limitations, manager },
+        questions: { limitations, manager },
       },
     } = await this.$axios.get('/')
 

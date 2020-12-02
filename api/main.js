@@ -6,7 +6,10 @@ const { default: ow } = require('ow')
 const bodyParser = require('body-parser')
 const hasCorrectToken = require('./hasCorrectToken')
 
-const tokens = require('./users.json').map(name => ({
+const json = file =>
+  JSON.parse(fs.readFileSync(`./${file}.json`, { encoding: 'utf-8' }))
+
+const tokens = json('users').map(name => ({
   name,
   token: Math.random().toString(36).substring(2, 15),
 }))
@@ -70,10 +73,8 @@ app.get('/', (req, res) => {
   })
 
   res.send({
-    answers,
-    results: JSON.parse(
-      fs.readFileSync('./answers.json', { encoding: 'utf-8' })
-    ),
+    questions: json('questions'),
+    results: json('answers'),
   })
 })
 

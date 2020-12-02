@@ -44,14 +44,14 @@ const defaultOptions = {
 export default {
   data() {
     return {
-      answers: {},
+      questions: {},
       results: {},
       removableTeammates: [],
     }
   },
   async mounted() {
     const { data } = await this.$axios.get()
-    this.answers = data.answers
+    this.questions = data.questions
     this.results = Object.entries(data.results).map(
       ([name, possibilities]) => ({
         name,
@@ -61,7 +61,7 @@ export default {
 
     this.managerChart()
 
-    const limitations = this.answers.limitations
+    const limitations = this.questions.limitations
     this.removableTeammates = Object.entries(limitations).map(([el]) => el)
     await this.$nextTick()
 
@@ -73,12 +73,12 @@ export default {
     managerChart() {
       let managerVotes = _.groupBy(this.results, ({ manager }) => manager)
       managerVotes = countVotes(managerVotes)
-      managerVotes = this.answers.manager.map(el => managerVotes[el] || 0)
+      managerVotes = this.questions.manager.map(el => managerVotes[el] || 0)
 
       new Chart(this.$refs.canvas, {
         type: 'bar',
         data: {
-          labels: this.answers.manager,
+          labels: this.questions.manager,
           datasets: [
             {
               data: managerVotes,
@@ -88,7 +88,7 @@ export default {
       })
     },
     removeTeamMemberChart(ctx, teammate) {
-      const possibilities = this.answers.limitations[teammate]
+      const possibilities = this.questions.limitations[teammate]
 
       let votes = _.groupBy(this.results, el => el.limitations[teammate])
       votes = countVotes(votes)
