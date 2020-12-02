@@ -1,6 +1,5 @@
 const fs = require('fs')
 const express = require('express')
-const _ = require('lodash')
 const R = require('ramda')
 const cors = require('cors')
 const { default: ow } = require('ow')
