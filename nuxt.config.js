@@ -16,7 +16,10 @@ export default {
   ],
   modules: ['@nuxtjs/axios'],
   axios: {
-    baseURL: 'http://localhost:8080',
+    baseURL:
+      process.env.NODE_ENV === 'production'
+        ? '/api'
+        : 'http://localhost:8080/api',
   },
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
