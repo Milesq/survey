@@ -1,4 +1,5 @@
 export default {
+  ssr: false,
   head: {
     titleTemplate: '%s - survey',
     title: 'survey',
