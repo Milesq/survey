@@ -7,14 +7,16 @@ const hasCorrectToken = require('./hasCorrectToken')
 const router = Router()
 
 const json = file =>
-  JSON.parse(fs.readFileSync(`./${file}.json`, { encoding: 'utf-8' }))
+  JSON.parse(fs.readFileSync(`./data/${file}.json`, { encoding: 'utf-8' }))
+
+require('./defaultFiles')()
 
 const tokens = json('users').map(name => ({
   name,
   token: Math.random().toString(36).substring(2, 15),
 }))
 
-fs.writeFileSync('tokens.json', JSON.stringify(tokens, null, 2))
+fs.writeFileSync('./data/tokens.json', JSON.stringify(tokens, null, 2))
 
 const bodyTemplate = R.pipe(
   R.flatten,
@@ -42,7 +44,7 @@ router.post('/:token', hasCorrectToken(tokens), (req, res) => {
 
   answers[req.user] = req.body
 
-  fs.writeFileSync('./answers.json', JSON.stringify(answers, null, 2))
+  fs.writeFileSync('./data/answers.json', JSON.stringify(answers, null, 2))
 
   res.send('ok')
 })

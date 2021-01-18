@@ -1,7 +1,4 @@
-answers.json
-users.json
-questions.json
-tokens.json
+data/
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Node template
