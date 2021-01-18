@@ -60,3 +60,5 @@ router.get('/:tokenToCheck', (req, res) => {
 
   res.send({ exists })
 })
+
+module.exports = router
