@@ -25,7 +25,7 @@
             class="mt-4"
             outlined
             label="Access Code"
-            :error-messages="codeExists ? [] : 'Podany kod nie istnieje'"
+            :error-messages="codeExists ? [] : 'Given code is incorrect'"
           ></v-text-field>
 
           <div class="d-flex justify-end">
@@ -50,9 +50,9 @@
           />
 
           <div class="d-flex justify-space-between">
-            <v-btn text @click="currentEl--">Powrót</v-btn>
+            <v-btn text @click="currentEl--">Go Back</v-btn>
             <v-btn color="success" type="submit">
-              {{ isTheLast ? 'Wyślij' : 'Dalej' }}
+              {{ isTheLast ? 'Send' : 'Next' }}
             </v-btn>
           </div>
         </v-form>
