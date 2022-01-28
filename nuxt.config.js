@@ -16,6 +16,9 @@ export default {
     '@nuxtjs/vuetify',
   ],
   modules: ['@nuxtjs/axios'],
+  generate: {
+    dir: './api/dist',
+  },
   axios: {
     baseURL:
       process.env.NODE_ENV === 'production'
